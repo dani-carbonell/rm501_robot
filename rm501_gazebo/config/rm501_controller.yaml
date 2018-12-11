@@ -1,0 +1,42 @@
+rm501:
+
+  joint1_position:
+    type: position_controllers/JointPositionController
+    joint: rm501_joint1
+    pid: {p: 100.0, i: 0.0, d: 10.0}
+
+  joint2_position:
+    type: position_controllers/JointPositionController
+    joint: rm501_joint2
+    pid: {p: 500.0, i: 0.0, d: 15.0}
+
+  joint3_position:
+    type: position_controllers/JointPositionController
+    joint: rm501_joint3
+    pid: {p: 500.0, i: 0.0, d: 6.0}
+
+  joint4_position:
+    type: position_controllers/JointPositionController
+    joint: rm501_joint4
+    pid: {p: 500.0, i: 0.0, d: 5.0}
+
+  joint5_position:
+    type: position_controllers/JointPositionController
+    joint: rm501_joint5
+    pid: {p: 500.0, i: 0.0, d: 5.0}
+
+  # Publish all joint states -----------------------------------
+  joint_state_controller:
+    type: joint_state_controller/JointStateController
+    publish_rate: 125
+
+# No Pid gains specified error fix
+  gazebo_ros_control:
+    pid_gains:
+      rm501_joint1: {p: 1200.0, i: 5.0, d: 10.0}
+      rm501_joint2: {p: 1400.0, i: 5.0, d: 10.0}
+      rm501_joint3: {p: 1200.0, i: 5.0, d: 5.0}
+      rm501_joint4: {p: 850.0, i: 3.0, d: 5.0}
+      rm501_joint5: {p: 500.0, i: 3.0, d: 1.0}
+
+

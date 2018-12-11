@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>rm501_robot</name>
+  <version>1.0.0</version>
+  <description>
+    ROS Metapackage created by Showbots Gmbh to control the Mitsubishi Movemaster II (RM-501) with a roboclaw based controller box.
+  </description>
+  <license>Apache 2.0</license>
+  <author email="danicarbonellrubio@gmail.com">Dani Carbonell</author>
+  <maintainer email="danicarbonellrubio@gmail.com">Dani Carbonell</maintainer>
+  <url type="website"></url>
+  <url type="emanual"></url>
+  <url type="repository"></url>
+  <url type="bugtracker"></url>
+  <buildtool_depend>catkin</buildtool_depend>
+  <exec_depend>rm501_description</exec_depend>
+  
+  <export><metapackage/></export>
+</package>

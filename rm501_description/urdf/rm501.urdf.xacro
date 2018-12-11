@@ -1,0 +1,364 @@
+<?xml version="1.0"?>
+<robot
+  name="rm501" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  
+  <xacro:include filename="$(find rm501_description)/urdf/materials.xacro" />
+  
+  <xacro:include filename="$(find rm501_description)/urdf/rm501_robot.gazebo" />
+  
+  <xacro:include filename="$(find rm501_description)/urdf/rm501_transmission.xacro" />
+  
+  <xacro:property name="PI" value="3.1415926535897931"/>
+  
+  <xacro:property name="density" value="3.09"/>
+  
+  <link name="world"/>
+  
+  <joint name="world_base" type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="world" />
+    <child
+      link="rm501_base_link" />
+  </joint>
+  
+  <link name="rm501_base_link"/>
+  
+  <joint name="rm501_base_joint" type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="rm501_base_link" />
+    <child
+      link="rm501_base" />
+  </joint>
+  
+  <link
+    name="rm501_base">
+    <inertial>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0"/>
+      <mass value="${0.890680700037*density}"/>
+      <inertia
+      ixx="${0.00287631*density}" ixy="${1.617e-05*density}" ixz="${3.38e-06*density}"
+      iyy="${0.00304792*density}" iyz="${2.79e-05*density}"
+      izz="${0.00537429*density}"/>
+    </inertial>
+    <visual>
+      <origin
+        xyz="-0.060 0 0.049"
+        rpy="0 0 0" />
+      <geometry>
+        <box size="0.208 0.200 0.098"/>
+      </geometry>
+      <material
+        name="metal_grey"/>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <box size="0.208 0.200 0.098"/>
+      </geometry>
+    </collision>
+  </link>
+
+
+
+
+<link
+    name="rm501_link1">
+    <inertial>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0"/>
+      <mass value="${5.04797690664*density}"/>
+      <inertia
+      ixx="${0.03982126*density}" ixy="${0.00844769*density}" ixz="${-4.29e-06*density}"
+      iyy="${0.02114179*density}" iyz="${-2.23e-06*density}"
+      izz="${0.04547525*density}"/>
+    </inertial>
+    <visual>
+      <origin
+        xyz="-0.130 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <box size="0.320 0.120 0.165"/>
+      </geometry>
+      <material
+        name="red"/>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+      <box size="0.320 0.120 0.120"/>
+      </geometry>
+    </collision>
+  </link>
+
+
+  <joint
+    name="rm501_joint1"
+    type="revolute">
+    <origin
+      xyz="0 0 0.250"
+      rpy="0 0 0" />
+    <parent
+      link="rm501_base" />
+    <child
+      link="rm501_link1" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      lower="-2.61799"
+      upper="2.61799"
+      effort="1000"
+      velocity="1.57" />
+  </joint>
+
+
+
+
+<link
+    name="rm501_link2">
+    <inertial>
+      <origin
+        xyz="-0.0589642426226 0.20968040657 -5.33587812464e-06"
+        rpy="0 0 0"/>
+      <mass value="${1.66596877354*density}"/>
+      <inertia
+      ixx="${0.052412*density}" ixy="${-0.00219612*density}" ixz="${-1.07e-06*density}"
+      iyy="${0.00434323*density}" iyz="${-1.255e-05*density}"
+      izz="${0.05107023*density}"/>
+    </inertial>
+    <visual>
+      <origin
+        xyz="0.125 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <box size="0.250 0.100 0.100"/>
+      </geometry>
+      <material
+        name="red"/>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+      <box size="0.250 0.100 0.100"/>
+      </geometry>
+    </collision>
+  </link>
+
+
+<joint
+    name="rm501_joint2"
+    type="revolute">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="rm501_link1" />
+    <child
+      link="rm501_link2" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      lower="-1.74533"
+      upper="0.523599"
+      effort="1000"
+      velocity="1.57" />
+  </joint>
+
+
+
+
+  <link
+    name="rm501_link3">
+    <inertial>
+      <origin
+        xyz="0.0625690665762 -0.0521846187635 2.58799082907e-05"
+        rpy="0 0 0"/>
+      <mass value="${2.51986584925*density}"/>
+      <inertia
+      ixx="${0.01259396*density}" ixy="${0.00288795*density}" ixz="${-1.16e-06*density}"
+      iyy="${0.00707893*density}" iyz="${-2.15e-06*density}"
+      izz="${0.01493778*density}"/>
+    </inertial>
+    <visual>
+      <origin
+        xyz="0.080 0 0"
+        rpy="0 0 0" />
+      <geometry>
+      <box size="0.160 0.080 0.100"/>
+      </geometry>
+      <material
+        name="red"/>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+      <box size="0 0 0"/>
+      </geometry>
+    </collision>
+  </link>
+
+<joint
+    name="rm501_joint3"
+    type="revolute">
+    <origin
+      xyz="0.220 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="rm501_link2" />
+    <child
+      link="rm501_link3" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      lower="0"
+      upper="1.5708"
+      effort="1000"
+      velocity="1.57" />
+  </joint>
+
+
+
+<link
+    name="rm501_link4">
+    <inertial>
+      <origin
+        xyz="-0.0653325107739 0.17924183252 -8.22522528991e-06"
+        rpy="0 0 0"/>
+      <mass value="${0.773882513506*density}"/>
+      <inertia
+      ixx="${0.01260891*density}" ixy="${0.00311563*density}" ixz="${5.8e-07*density}"
+      iyy="${0.00272662*density}" iyz="${-1.47e-06*density}"
+      izz="${0.01371082*density}"/>
+    </inertial>
+    <visual>
+      <origin
+        xyz="0.0325 0 0"
+        rpy="0 ${-PI/2} 0" />
+      <geometry>
+      <cylinder radius="0.02" length="0.132"/>
+      </geometry>
+      <material
+        name="black"/>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+      <box size="0 0 0"/>
+      </geometry>
+    </collision>
+  </link>
+
+
+<joint
+    name="rm501_joint4"
+    type="revolute">
+    <origin
+      xyz="0.160 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="rm501_link3" />
+    <child
+      link="rm501_link4" />
+    <axis
+      xyz="0 1 0" />
+    <limit
+      lower="-1.5708"
+      upper="1.5708"
+      effort="1000"
+      velocity="1.57" />
+  </joint>
+
+  <link
+    name="rm501_link5">
+    <inertial>
+      <origin
+        xyz="-0.0174451255278 -0.0377419055039 -1.41483594707e-05"
+        rpy="0 0 0"/>
+      <mass value="${1.07514483832*density}"/>
+      <inertia
+      ixx="${0.00296619*density}" ixy="${0.00072021*density}" ixz="${7.3e-07*density}"
+      iyy="${0.00182263*density}" iyz="${-3.7e-07*density}"
+      izz="${0.00372855*density}"/>
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+      <box size="0 0 0"/>
+      </geometry>      <material
+        name="metal"/>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+      <box size="0 0 0"/>
+      </geometry>
+      </collision>
+  </link>
+
+
+  <joint
+    name="rm501_joint5"
+    type="revolute">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="rm501_link4" />
+    <child
+      link="rm501_link5" />
+    <axis
+      xyz="1 0 0" />
+    <limit
+      lower="${-PI/2}"
+      upper="${PI/2}"
+      effort="1000"
+      velocity="1.57" />
+  </joint>
+  
+  <link name="rm501_end_link"/>
+  
+  <joint name="rm501_end_joint" type="fixed">
+    <origin
+      xyz="0.065 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="rm501_link5" />
+    <child
+      link="rm501_end_link" />
+  </joint>
+  
+  <link name="rm501_dummy_gripper"/>
+  
+  <joint name="rm501_dummy_joint" type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="0 0 0" />
+    <parent
+      link="rm501_link5" />
+    <child
+      link="rm501_dummy_gripper" />
+  </joint>
+  
+</robot>

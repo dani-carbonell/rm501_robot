@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <transmission name="rm501_joint1_trans">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="rm501_joint1">
+        <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="rm501_joint1_motor">
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+
+    <transmission name="rm501_joint2_trans">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="rm501_joint2">
+        <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="rm501_joint2_motor">
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+    
+    <transmission name="rm501_joint3_trans">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="rm501_joint3">
+        <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+      </joint>
+      <actuator name="rm501_joint3_motor">
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+
+
+  <transmission name="rm501_joint4_trans">
+    <type>transmission_interface/DifferentialTransmission</type>
+    <actuator name="rm501_joint4_motor1">
+      <role>actuator1</role>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+    <actuator name="rm501_joint4_motor2">
+      <role>actuator2</role>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+    <joint name="rm501_joint4">
+      <role>joint1</role>
+      <offset>0</offset> <!--optional-->
+      <mechanicalReduction>2</mechanicalReduction> <!--optional-->
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+    </joint>
+    <joint name="rm501_joint5">
+      <role>joint2</role>
+      <offset>0</offset> <!--optional-->
+      <mechanicalReduction>2</mechanicalReduction> <!--optional-->
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+    </joint>
+    
+</transmission>
+    
+</robot>
