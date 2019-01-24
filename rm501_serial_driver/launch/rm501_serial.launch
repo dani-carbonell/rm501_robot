@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+    This is the production launch file to be used with the real roboclaw device.
+-->
+ <launch>
+
+    <node name="roboclaw" pkg="rm501_serial_driver" type="rm501_node.py">
+        <param name="test_mode" type="bool" value="false"/>
+        <param name="dev_name" type="str" value="/dev/ttyUSB0"/>
+        <param name="baud" type="int" value="38400"/>
+        <param name="address1" type="int" value="128"/>
+        <param name="address2" type="int" value="129"/>
+        <param name="address3" type="int" value="130"/>
+        <param name="loop_hz" type="int" value="100"/>
+        <param name="deadman_secs" type="int" value="3"/>
+        <param name="speed_cmd_topic" type="str" value="rm501/speed_command"/>
+        <param name="stats_topic" type="str" value="roboclaw/stats"/>        
+    </node>
+
+</launch>
