@@ -19,6 +19,7 @@ DEFAULT_ADDRESS1=0x80
 DEFAULT_ADDRESS2=0x81
 DEFAULT_ADDRESS3=0x82
 
+DEFAULT_TOLERANCE=15
 DEFAULT_VEL_FAST=5000
 DEFAULT_VEL_MED=2000
 DEFAULT_VEL_SLOW=1000
@@ -118,7 +119,7 @@ class Axis(object):
 		if ret[0]:
 			self._position=ret[1]
 			self._position_status.set()
-			if (self._position > (self._target_position - 1)) and (self._position < (self._target_position + 1)):
+			if (self._position > (self._target_position - DEFAULT_TOLERANCE)) and (self._position < (self._target_position + DEFAULT_TOLERANCE)):
 				self._target_position_status.set()
 
 	def read_velocity(self):
@@ -133,7 +134,7 @@ class Axis(object):
 		if ret[0]:
 			self._velocity=ret[1]
 			self._velocity_status.set()
-			if (self._velocity > (self._target_velocity - 1)) and (self._velocity < (self._target_velocity + 1)):
+			if (self._velocity > (self._target_velocity - DEFAULT_TOLERANCE)) and (self._velocity < (self._target_velocity + DEFAULT_TOLERANCE)):
 				self._target_velocity_status.set()
 
 	@property
@@ -167,6 +168,11 @@ class Axis(object):
 
 		if ret:
 			self._target_velocity_status.clear()
+
+	def is_done(self):
+#		return (self._target_velocity_status.is_set() and self._target_position_status.is_set())
+		return self._target_position_status.is_set()
+
 
 class DiffTransmission(object):
 	def __init__(self, this_axis, other_axis):
@@ -235,6 +241,8 @@ class DiffTransmission(object):
 			self.this.target_velocity += diff
 			self.other.target_velocity -= diff
 
+	def is_done(self):
+		return (self.this.is_done() and self.other.is_done())
 
 
 # class DiffAxis(Axis):
@@ -342,7 +350,7 @@ class RM501_Control:
 
 	def __init__(self, serport=DEFAULT_PORT):
 		self._rc = Roboclaw(serport, 115200)
-		self._rc_polling_thread = Thread(target=self._polling_loop,name="RC501 Thread")
+		self._rc_polling_thread = Thread(target=self._polling_loop,name="Encoders Polling Thread")
 
 		self.axes = []
 		self.addrs = []
@@ -380,18 +388,19 @@ class RM501_Control:
 		self._rc_polling_thread.start()
 		threadpool.start(worker)
 
+
 	def _polling_loop(self):
 		while self._run_polling:
 			for a in self.axes:
 				a.read_position()
 				a.read_velocity()
 
-
 	def stop(self):
 		print("STOPPING {}".format(self._rc_polling_thread.name))
 		self._run_polling=False
 		self._rc_polling_thread.join()
 		worker.running=False
+		waypoint_executor.running=False
 		self._rc._port.close()
 		print("{} STOPPED".format(self._rc_polling_thread.name))
 		
@@ -481,111 +490,154 @@ def axis5_stop():
 # 	rc.SpeedAccelM2(address3,DEFAULT_ACCEL,0)
 
 
-
-
-
 class Ui_Dialog(object):
 	def setupUi(self, Dialog):
 		Dialog.setObjectName("Dialog")
-		Dialog.resize(1152, 840)
-		self.buttonBox = QtWidgets.QDialogButtonBox(Dialog)
-		self.buttonBox.setGeometry(QtCore.QRect(90, 760, 461, 32))
-		self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-		self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
-		self.buttonBox.setObjectName("buttonBox")
+		Dialog.resize(1592, 926)
 		self.pushButton = QtWidgets.QPushButton(Dialog)
-		self.pushButton.setGeometry(QtCore.QRect(190, 630, 170, 48))
+		self.pushButton.setGeometry(QtCore.QRect(180, 630, 150, 48))
 		self.pushButton.setObjectName("pushButton")
 		self.pushButton_2 = QtWidgets.QPushButton(Dialog)
-		self.pushButton_2.setGeometry(QtCore.QRect(450, 630, 170, 48))
+		self.pushButton_2.setGeometry(QtCore.QRect(480, 630, 150, 48))
 		self.pushButton_2.setObjectName("pushButton_2")
 		self.pushButton_3 = QtWidgets.QPushButton(Dialog)
-		self.pushButton_3.setGeometry(QtCore.QRect(190, 560, 170, 48))
+		self.pushButton_3.setGeometry(QtCore.QRect(180, 560, 150, 48))
 		self.pushButton_3.setObjectName("pushButton_3")
 		self.pushButton_4 = QtWidgets.QPushButton(Dialog)
-		self.pushButton_4.setGeometry(QtCore.QRect(450, 560, 170, 48))
+		self.pushButton_4.setGeometry(QtCore.QRect(480, 560, 150, 48))
 		self.pushButton_4.setObjectName("pushButton_4")
 		self.pushButton_5 = QtWidgets.QPushButton(Dialog)
-		self.pushButton_5.setGeometry(QtCore.QRect(190, 490, 170, 48))
+		self.pushButton_5.setGeometry(QtCore.QRect(180, 490, 150, 48))
 		self.pushButton_5.setObjectName("pushButton_5")
 		self.pushButton_6 = QtWidgets.QPushButton(Dialog)
-		self.pushButton_6.setGeometry(QtCore.QRect(450, 490, 170, 48))
+		self.pushButton_6.setGeometry(QtCore.QRect(480, 490, 150, 48))
 		self.pushButton_6.setObjectName("pushButton_6")
 		self.pushButton_7 = QtWidgets.QPushButton(Dialog)
-		self.pushButton_7.setGeometry(QtCore.QRect(190, 420, 170, 48))
+		self.pushButton_7.setGeometry(QtCore.QRect(180, 420, 150, 48))
 		self.pushButton_7.setObjectName("pushButton_7")
 		self.pushButton_8 = QtWidgets.QPushButton(Dialog)
-		self.pushButton_8.setGeometry(QtCore.QRect(450, 420, 170, 48))
+		self.pushButton_8.setGeometry(QtCore.QRect(480, 420, 150, 48))
 		self.pushButton_8.setObjectName("pushButton_8")
 		self.pushButton_9 = QtWidgets.QPushButton(Dialog)
-		self.pushButton_9.setGeometry(QtCore.QRect(190, 350, 170, 48))
+		self.pushButton_9.setGeometry(QtCore.QRect(180, 350, 150, 48))
 		self.pushButton_9.setObjectName("pushButton_9")
 		self.pushButton_10 = QtWidgets.QPushButton(Dialog)
-		self.pushButton_10.setGeometry(QtCore.QRect(450, 350, 170, 48))
+		self.pushButton_10.setGeometry(QtCore.QRect(480, 350, 150, 48))
 		self.pushButton_10.setObjectName("pushButton_10")
 		self.pushButton_11 = QtWidgets.QPushButton(Dialog)
 		self.pushButton_11.setGeometry(QtCore.QRect(460, 30, 170, 48))
 		self.pushButton_11.setObjectName("pushButton_11")
 		self.pushButton_12 = QtWidgets.QPushButton(Dialog)
-		self.pushButton_12.setGeometry(QtCore.QRect(190, 280, 170, 48))
+		self.pushButton_12.setGeometry(QtCore.QRect(180, 280, 150, 48))
 		self.pushButton_12.setObjectName("pushButton_12")
 		self.pushButton_13 = QtWidgets.QPushButton(Dialog)
-		self.pushButton_13.setGeometry(QtCore.QRect(450, 280, 170, 48))
+		self.pushButton_13.setGeometry(QtCore.QRect(480, 280, 150, 48))
 		self.pushButton_13.setObjectName("pushButton_13")
 		self.pushButton_14 = QtWidgets.QPushButton(Dialog)
-		self.pushButton_14.setGeometry(QtCore.QRect(250, 30, 170, 48))
+		self.pushButton_14.setGeometry(QtCore.QRect(240, 30, 170, 48))
 		self.pushButton_14.setObjectName("pushButton_14")
-		self.textBrowser = QtWidgets.QTextBrowser(Dialog)
-		self.textBrowser.setGeometry(QtCore.QRect(650, 30, 491, 791))
-		self.textBrowser.setObjectName("textBrowser")
 		self.pushButton_15 = QtWidgets.QPushButton(Dialog)
-		self.pushButton_15.setGeometry(QtCore.QRect(300, 100, 211, 121))
+		self.pushButton_15.setGeometry(QtCore.QRect(180, 760, 240, 121))
 		self.pushButton_15.setObjectName("pushButton_15")
 		self.pushButton_16 = QtWidgets.QPushButton(Dialog)
-		self.pushButton_16.setGeometry(QtCore.QRect(40, 30, 170, 48))
+		self.pushButton_16.setGeometry(QtCore.QRect(30, 30, 151, 48))
 		self.pushButton_16.setObjectName("pushButton_16")
 		self.label = QtWidgets.QLabel(Dialog)
-		self.label.setGeometry(QtCore.QRect(370, 640, 71, 31))
+		self.label.setGeometry(QtCore.QRect(340, 640, 130, 31))
 		self.label.setAlignment(QtCore.Qt.AlignCenter)
 		self.label.setObjectName("label")
 		self.label_2 = QtWidgets.QLabel(Dialog)
-		self.label_2.setGeometry(QtCore.QRect(370, 570, 71, 34))
+		self.label_2.setGeometry(QtCore.QRect(340, 570, 130, 34))
 		self.label_2.setAlignment(QtCore.Qt.AlignCenter)
 		self.label_2.setObjectName("label_2")
 		self.label_3 = QtWidgets.QLabel(Dialog)
-		self.label_3.setGeometry(QtCore.QRect(370, 500, 71, 34))
+		self.label_3.setGeometry(QtCore.QRect(340, 500, 130, 34))
 		self.label_3.setAlignment(QtCore.Qt.AlignCenter)
 		self.label_3.setObjectName("label_3")
 		self.label_4 = QtWidgets.QLabel(Dialog)
-		self.label_4.setGeometry(QtCore.QRect(370, 430, 71, 34))
+		self.label_4.setGeometry(QtCore.QRect(340, 430, 130, 34))
 		self.label_4.setAlignment(QtCore.Qt.AlignCenter)
 		self.label_4.setObjectName("label_4")
 		self.label_5 = QtWidgets.QLabel(Dialog)
-		self.label_5.setGeometry(QtCore.QRect(370, 360, 71, 34))
+		self.label_5.setGeometry(QtCore.QRect(340, 360, 130, 34))
 		self.label_5.setAlignment(QtCore.Qt.AlignCenter)
 		self.label_5.setObjectName("label_5")
 		self.label_6 = QtWidgets.QLabel(Dialog)
-		self.label_6.setGeometry(QtCore.QRect(370, 290, 71, 34))
+		self.label_6.setGeometry(QtCore.QRect(340, 290, 130, 34))
 		self.label_6.setAlignment(QtCore.Qt.AlignCenter)
 		self.label_6.setObjectName("label_6")
 		self.spinBox = QtWidgets.QSpinBox(Dialog)
-		self.spinBox.setGeometry(QtCore.QRect(142, 90, 121, 49))
+		self.spinBox.setGeometry(QtCore.QRect(512, 100, 121, 49))
 		self.spinBox.setObjectName("spinBox")
 		self.spinBox_2 = QtWidgets.QSpinBox(Dialog)
-		self.spinBox_2.setGeometry(QtCore.QRect(142, 140, 121, 49))
+		self.spinBox_2.setGeometry(QtCore.QRect(512, 150, 121, 49))
 		self.spinBox_2.setObjectName("spinBox_2")
 		self.spinBox_3 = QtWidgets.QSpinBox(Dialog)
-		self.spinBox_3.setGeometry(QtCore.QRect(142, 190, 121, 49))
+		self.spinBox_3.setGeometry(QtCore.QRect(512, 200, 121, 49))
 		self.spinBox_3.setObjectName("spinBox_3")
+		self.lineEdit = QtWidgets.QLineEdit(Dialog)
+		self.lineEdit.setGeometry(QtCore.QRect(10, 630, 150, 42))
+		self.lineEdit.setObjectName("lineEdit")
+		self.lineEdit_2 = QtWidgets.QLineEdit(Dialog)
+		self.lineEdit_2.setGeometry(QtCore.QRect(10, 560, 150, 42))
+		self.lineEdit_2.setObjectName("lineEdit_2")
+		self.lineEdit_3 = QtWidgets.QLineEdit(Dialog)
+		self.lineEdit_3.setGeometry(QtCore.QRect(10, 420, 150, 42))
+		self.lineEdit_3.setObjectName("lineEdit_3")
+		self.lineEdit_4 = QtWidgets.QLineEdit(Dialog)
+		self.lineEdit_4.setGeometry(QtCore.QRect(10, 490, 150, 42))
+		self.lineEdit_4.setObjectName("lineEdit_4")
+		self.lineEdit_5 = QtWidgets.QLineEdit(Dialog)
+		self.lineEdit_5.setGeometry(QtCore.QRect(10, 280, 150, 42))
+		self.lineEdit_5.setObjectName("lineEdit_5")
+		self.lineEdit_6 = QtWidgets.QLineEdit(Dialog)
+		self.lineEdit_6.setGeometry(QtCore.QRect(10, 350, 150, 42))
+		self.lineEdit_6.setObjectName("lineEdit_6")
+		self.pushButton_17 = QtWidgets.QPushButton(Dialog)
+		self.pushButton_17.setGeometry(QtCore.QRect(430, 760, 101, 61))
+		self.pushButton_17.setObjectName("pushButton_17")
+		self.pushButton_18 = QtWidgets.QPushButton(Dialog)
+		self.pushButton_18.setGeometry(QtCore.QRect(430, 820, 101, 61))
+		self.pushButton_18.setObjectName("pushButton_18")
+		self.tableWidget = QtWidgets.QTableWidget(Dialog)
+		self.tableWidget.setGeometry(QtCore.QRect(650, 30, 941, 891))
+		self.tableWidget.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+		self.tableWidget.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+		self.tableWidget.setAlternatingRowColors(True)
+		self.tableWidget.setRowCount(0)
+		self.tableWidget.setColumnCount(7)
+		self.tableWidget.setObjectName("tableWidget")
+		item = QtWidgets.QTableWidgetItem()
+		self.tableWidget.setHorizontalHeaderItem(0, item)
+		item = QtWidgets.QTableWidgetItem()
+		self.tableWidget.setHorizontalHeaderItem(1, item)
+		item = QtWidgets.QTableWidgetItem()
+		self.tableWidget.setHorizontalHeaderItem(2, item)
+		item = QtWidgets.QTableWidgetItem()
+		self.tableWidget.setHorizontalHeaderItem(3, item)
+		item = QtWidgets.QTableWidgetItem()
+		self.tableWidget.setHorizontalHeaderItem(4, item)
+		item = QtWidgets.QTableWidgetItem()
+		self.tableWidget.setHorizontalHeaderItem(5, item)
+		item = QtWidgets.QTableWidgetItem()
+		self.tableWidget.setHorizontalHeaderItem(6, item)
+		self.tableWidget.horizontalHeader().setDefaultSectionSize(130)
+		self.label_7 = QtWidgets.QLabel(Dialog)
+		self.label_7.setGeometry(QtCore.QRect(368, 110, 141, 34))
+		self.label_7.setObjectName("label_7")
+		self.label_8 = QtWidgets.QLabel(Dialog)
+		self.label_8.setGeometry(QtCore.QRect(368, 160, 141, 34))
+		self.label_8.setObjectName("label_8")
+		self.label_9 = QtWidgets.QLabel(Dialog)
+		self.label_9.setGeometry(QtCore.QRect(368, 210, 141, 34))
+		self.label_9.setObjectName("label_9")
 
 		self.retranslateUi(Dialog)
-		self.buttonBox.accepted.connect(Dialog.accept)
-		self.buttonBox.rejected.connect(Dialog.reject)
 		QtCore.QMetaObject.connectSlotsByName(Dialog)
 
 	def retranslateUi(self, Dialog):
 		_translate = QtCore.QCoreApplication.translate
-		Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
+		Dialog.setWindowTitle(_translate("Dialog", "RM501 Control"))
 		self.pushButton.setText(_translate("Dialog", "Axis1-"))
 		self.pushButton_2.setText(_translate("Dialog", "Axis1+"))
 		self.pushButton_3.setText(_translate("Dialog", "Axis2-"))
@@ -600,17 +652,37 @@ class Ui_Dialog(object):
 		self.pushButton_12.setText(_translate("Dialog", "Close"))
 		self.pushButton_13.setText(_translate("Dialog", "Open"))
 		self.pushButton_14.setText(_translate("Dialog", "HOME"))
-		self.pushButton_15.setText(_translate("Dialog", "RecordPosition"))
-		self.pushButton_16.setText(_translate("Dialog", "Nest"))
+		self.pushButton_15.setText(_translate("Dialog", "Record Position"))
+		self.pushButton_16.setText(_translate("Dialog", "Nest "))
 		self.label.setText(_translate("Dialog", "0"))
 		self.label_2.setText(_translate("Dialog", "0"))
 		self.label_3.setText(_translate("Dialog", "0"))
 		self.label_4.setText(_translate("Dialog", "0"))
 		self.label_5.setText(_translate("Dialog", "0"))
 		self.label_6.setText(_translate("Dialog", "0"))
+		self.pushButton_17.setText(_translate("Dialog", "Start"))
+		self.pushButton_18.setText(_translate("Dialog", "Stop"))
+		self.tableWidget.setSortingEnabled(False)
+		item = self.tableWidget.horizontalHeaderItem(0)
+		item.setText(_translate("Dialog", "Gripper"))
+		item = self.tableWidget.horizontalHeaderItem(1)
+		item.setText(_translate("Dialog", "Axis 1"))
+		item = self.tableWidget.horizontalHeaderItem(2)
+		item.setText(_translate("Dialog", "Axis 2"))
+		item = self.tableWidget.horizontalHeaderItem(3)
+		item.setText(_translate("Dialog", "Axis 3"))
+		item = self.tableWidget.horizontalHeaderItem(4)
+		item.setText(_translate("Dialog", "Axis 4"))
+		item = self.tableWidget.horizontalHeaderItem(5)
+		item.setText(_translate("Dialog", "Axis 5"))
+		item = self.tableWidget.horizontalHeaderItem(6)
+		item.setText(_translate("Dialog", "MaxTime"))
+		self.label_7.setText(_translate("Dialog", "PosToler"))
+		self.label_8.setText(_translate("Dialog", "SerialTO"))
+		self.label_9.setText(_translate("Dialog", "Max Time"))
 
 
-		##USER CODE##
+
 		self.pushButton.pressed.connect(axis1_moveb)
 		self.pushButton.released.connect(axis1_stop)
 		self.pushButton_2.pressed.connect(axis1_movef)
@@ -635,10 +707,61 @@ class Ui_Dialog(object):
 		self.pushButton_12.released.connect(gripper_stop)
 		self.pushButton_13.pressed.connect(gripper_movef)
 		self.pushButton_13.released.connect(gripper_stop)
-
+		self.pushButton_15.clicked.connect(self.record_position)
 		self.pushButton_11.clicked.connect(rm501.connect)
+		self.pushButton_17.clicked.connect(self.waypoint_start)
+#		self.pushButton_17.clicked.connect(self.start_secuence)
+		self.pushButton_18.clicked.connect(self.waypoint_stop)
 
 
+	def record_position(self,Dialog):
+		
+
+		self.tableWidget.insertRow(self.tableWidget.rowCount())
+		last_row=self.tableWidget.rowCount()-1
+		items=[]
+
+		items.append(QtWidgets.QTableWidgetItem(str(rm501.axes[0].position)))
+		items.append(QtWidgets.QTableWidgetItem(str(rm501.axes[1].position)))
+		items.append(QtWidgets.QTableWidgetItem(str(rm501.axes[2].position)))
+		items.append(QtWidgets.QTableWidgetItem(str(rm501.axes[3].position)))
+		items.append(QtWidgets.QTableWidgetItem(str(rm501.axes[4].position)))
+		items.append(QtWidgets.QTableWidgetItem(str(rm501.axes[5].position)))
+		items.append(QtWidgets.QTableWidgetItem(str(self.spinBox_3.value())))
+
+
+		self.tableWidget.setCurrentCell(last_row,0)
+
+		for n in range(len(items)):
+
+			self.tableWidget.setItem(last_row,n, items[n])
+		
+
+		self.tableWidget.scrollToItem(self.tableWidget.currentItem())
+
+
+	def start_secuence(self,Dialog):
+
+
+		self.tableWidget.setCurrentCell(0,0)
+
+		rm501.diff_axes[0].target_position=10000
+		rm501.diff_axes[0].target_position=10000
+		#rm501.diff_axes[0].target_position=int(self.tableWidget.item(0,4).text())
+		#rm501.diff_axes[1].target_position=int(self.tableWidget.item(0,5).text())
+
+		time.sleep(3)
+		#while not rm501.diff_axes[4].is_done():
+		#	time.sleep(0.1)
+
+		rm501.diff_axes[0].target_position=int(self.tableWidget.item(1,4).text())
+		rm501.diff_axes[1].target_position=int(self.tableWidget.item(1,5).text())
+
+	def waypoint_start(self,Dialog):
+		threadpool_waypoints.start(waypoint_executor)
+
+	def waypoint_stop(self,Dialog):
+		waypoint_executor.autoDelete()
 
 class Postion_Displayer(QtCore.QRunnable):
 		
@@ -665,8 +788,71 @@ class Postion_Displayer(QtCore.QRunnable):
 			except RequestPending as e:
 	#			pass
 				print("timeout on {}".format(str(e)))
-			time.sleep(0.04)
+			
 
+class Waypoint_Executor(QtCore.QRunnable):
+
+	def __init__(self,dialog):
+		if not isinstance(dialog,Ui_Dialog):
+			raise TypeError("Given dialog argument must be an instance of Ui_Dialog.")
+		
+
+		super(QtCore.QRunnable,self).__init__()
+
+		self.dialog=dialog
+		self.running=True
+		print(str("Waypoint executor running."))
+
+
+	@QtCore.pyqtSlot()
+	def run(self):
+
+
+		self.dialog.tableWidget.scrollToItem(self.dialog.tableWidget.currentItem())
+		#self.dialog.tableWidget.setCurrentCell(0,0)
+
+		while self.running:
+		
+			try:	
+				for waypoint_index in range(self.dialog.tableWidget.rowCount()):
+
+					waypoint_data=self.read_waypoint(waypoint_index)
+					print(str("Waypoint index: {}").format(waypoint_index))
+					#waypoint_timer=QtCore.QBasicTimer()
+
+					for axis in range(6):
+
+							rm501.axes[axis].target_position=int(self.dialog.tableWidget.item(waypoint_index,axis).text())
+							print(str("{}").format(rm501.axes[axis].target_position))
+							#waypoint_timer.start()
+
+					while not rm501.axes[1].is_done() or not rm501.axes[2].is_done() or not rm501.axes[3].is_done() or not rm501.axes[4].is_done() or not rm501.axes[5].is_done():
+						
+						print("Reaching waypoint: {}".format(waypoint_index))
+						for done in range(6):
+							if rm501.axes[done].is_done():
+								print("Axis{}: DONE".format(done))
+							else:	
+								print("Axis{}: NOT DONE".format(done))
+
+
+						time.sleep(0.5)
+
+			except RequestPending as e:
+				print("timeout on {}".format(str(e)))
+
+
+	
+	def read_waypoint(self,waypoint_index):
+
+		waypoint_data=[]
+
+
+		for column in range(self.dialog.tableWidget.columnCount()):
+			waypoint_data.append(int(self.dialog.tableWidget.item(waypoint_index,column).text()))
+		return waypoint_data
+
+	
 
 if __name__ == "__main__":
 	import sys
@@ -676,11 +862,13 @@ if __name__ == "__main__":
 	app = QtWidgets.QApplication(sys.argv)
 	Dialog = QtWidgets.QDialog()
 	threadpool = QtCore.QThreadPool()
+	threadpool_waypoints = QtCore.QThreadPool()
 	print("Multithreading with maximum {} threads".format(threadpool.maxThreadCount()))
 	ui = Ui_Dialog()
 	ui.setupUi(Dialog)
 
 	worker = Postion_Displayer(ui)
+	waypoint_executor = Waypoint_Executor(ui)
 
 	Dialog.show()
 	exit_code = app.exec_()

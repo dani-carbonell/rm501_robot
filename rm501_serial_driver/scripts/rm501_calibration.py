@@ -68,7 +68,7 @@ def homeaxis(address,motorN,speed,caltime):
 		time.sleep(0.1)
 		#Fine homing		
 		rc.SpeedM1(address,-100)
-		time.sleep(3)
+		time.sleep(4)
 		rc.SpeedM1(address,0)
 	
 	else:
@@ -85,7 +85,7 @@ def homeaxis(address,motorN,speed,caltime):
 		#Fine homing		
 		#Fine homing		
 		rc.SpeedM2(address,-100)
-		time.sleep(3)
+		time.sleep(4)
 		rc.SpeedM2(address,0)
 
 
