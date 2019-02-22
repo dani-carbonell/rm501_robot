@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
 # Form implementation generated from reading ui file 'rm501_positioner.ui'
@@ -9,10 +9,12 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 import time
-#import inputs
-from queue import Queue
+import inputs
+import os
+import csv
+from Queue import Queue
 from threading import Thread, Lock, Event
-from roboclaw import Roboclaw
+from roboclaw27 import Roboclaw
 
 DEFAULT_PORT="/dev/ttyUSB0"
 
@@ -20,10 +22,10 @@ DEFAULT_ADDRESS1=0x80
 DEFAULT_ADDRESS2=0x81
 DEFAULT_ADDRESS3=0x82
 
-DEFAULT_TOLERANCE=15
+DEFAULT_TOLERANCE=20
 DEFAULT_VEL_FAST=7000
-DEFAULT_VEL_MED=3000
-DEFAULT_VEL_SLOW=2000
+DEFAULT_VEL_MED=5000
+DEFAULT_VEL_SLOW=3000
 DEFAULT_ACCEL=8000
 AXIS1_MIN_LIM=-135
 AXIS1_MAX_LIM=135
@@ -42,7 +44,7 @@ class RequestPending(Exception):
 
 
 class Axis(object):
-	def __init__(self, rc, name, addr, m_nr, default_spd=9000, default_acc=15000):
+	def __init__(self, rc, name, addr, m_nr, default_spd=10000, default_acc=19000):
 		if not isinstance(rc, Roboclaw):
 			raise TypeError("rc argument must be an instance of Roboclaw. Got {}".format(type(rc).__name__))
 
@@ -246,95 +248,6 @@ class DiffTransmission(object):
 		return (self.this.is_done() and self.other.is_done())
 
 
-# class DiffAxis(Axis):
-# 	def __init__(self, rc, name, addr, this_m_nr, other_m_nr, default_spd=5000, default_acc=10000):
-# 		super(DiffAxis, self).__init__(rc, name, addr, this_m_nr, default_spd, default_acc)
-
-# 		self.om_nr=other_m_nr
-
-# 		if (self.om_nr < 1) or (self.om_nr > 2):
-# 			raise ValueError("Motor-Number must be 1 or 2")
-
-# 	def read_position(self):
-# 		self._position_status.clear()
-
-# 		with self._rc._port_lock:
-# 			if (self.m_nr == 1):
-# 				this_ret=self._rc.ReadEncM1(self.addr)
-# 			else:
-# 				this_ret=self._rc.ReadEncM2(self.addr)
-
-# 		if not this_ret[0]:
-# 			return
-
-# 		with self._rc._port_lock:
-# 			if (self.om_nr == 1):
-# 				other_ret=self._rc.ReadEncM1(self.addr)
-# 			else:
-# 				other_ret=self._rc.ReadEncM2(self.addr)
-
-# 		if not other_ret[0]:
-# 			return
-
-# 		if (self.om_nr == 1):
-# 			self._position=this_ret[1] - other_ret[1]
-# 		else:
-# 			self._position=this_ret[1] + other_ret[1]
-
-# 		self._position_status.set()
-
-# 	def read_velocity(self):
-# 		self._velocity_status.clear()
-
-# 		with self._rc._port_lock:
-# 			if (self.m_nr == 1):
-# 				this_ret=self._rc.ReadSpeedM1(self.addr)
-# 			else:
-# 				this_ret=self._rc.ReadSpeedM2(self.addr)
-
-# 		if not this_ret[0]:
-# 			return
-
-# 		with self._rc._port_lock:
-# 			if (self.om_nr == 1):
-# 				other_ret=self._rc.ReadSpeedM1(self.addr)
-# 			else:
-# 				other_ret=self._rc.ReadSpeedM2(self.addr)
-
-# 		if not other_ret[0]:
-# 			return
-
-# 		if (self.om_nr == 1):
-# 			self._velocity=this_ret[1] - other_ret[1]
-# 		else:
-# 			self._velocity=this_ret[1] + other_ret[1]
-
-# 		self._velocity_status.set()
-
-
-# 	@target_position.setter
-# 	def target_position(self, pos):
-# 		self._target_position = pos
-# 		with self._rc._port_lock:
-# 			if (self.m_nr == 1):
-# 				ret = self._rc.SpeedAccelDeccelPositionM1(self.addr, self.default_acc, self.default_spd, self.default_acc, self._target_position, 1)
-# 			else:
-# 				ret = self._rc.SpeedAccelDeccelPositionM2(self.addr, self.default_acc, self.default_spd, self.default_acc, self._target_position, 1)
-
-# 		if ret:
-# 			self._target_position_status.clear()
-
-# 	@target_velocity.setter
-# 	def target_velocity(self, vel):
-# 		self._target_velocity = vel
-# 		with self._rc._port_lock:
-# 			if (self.m_nr == 1):
-# 				ret = self._rc.SpeedAccelM1(self.addr, self.default_acc, self._target_velocity)
-# 			else:
-# 				ret = self._rc.SpeedAccelM2(self.addr, self.default_acc, self._target_velocity)
-
-# 		if ret:
-# 			self._target_velocity_status.clear()
 
 
 
@@ -494,6 +407,41 @@ def axis5_stop():
 # 	rc.SpeedAccelM2(address3,DEFAULT_ACCEL,0)
 
 
+class WaypointTableWidget(QtWidgets.QTableWidget):
+
+	def import_csv(self):
+		path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open CSV', os.getenv('HOME'), 'CSV(*.csv)')
+		if path[0] != '':
+			with open(path[0], 'rU') as csv_file:
+				self.setRowCount(0)
+				self.setColumnCount(7)
+				my_file = csv.reader(csv_file, dialect='excel')
+				for row_data in my_file:
+					row = self.rowCount()
+					self.insertRow(row)
+#					if len(row_data) > 10:
+#						self.setColumnCount(len(row_data))
+					for column, stuff in enumerate(row_data):
+						item = QtWidgets.QTableWidgetItem(stuff)
+						self.setItem(row, column, item)
+
+	def export_csv(self):
+		path = QtWidgets.QFileDialog.getSaveFileName(self, 'Save CSV', os.getenv('HOME'), 'CSV(*.csv)')
+		if path[0] != '':
+			with open(path[0], 'w') as csv_file:
+				writer = csv.writer(csv_file, dialect='excel')
+				for row in range(self.rowCount()):
+					row_data = []
+					for column in range(self.columnCount()):
+						item = self.item(row, column)
+						if item is not None:
+							row_data.append(item.text())
+						else:
+							row_data.append('')
+
+					print(row_data)
+					writer.writerow(row_data)
+
 
 class Ui_Dialog(object):
 	def setupUi(self, Dialog):
@@ -604,7 +552,7 @@ class Ui_Dialog(object):
 		self.pushButton_18 = QtWidgets.QPushButton(Dialog)
 		self.pushButton_18.setGeometry(QtCore.QRect(270, 810, 101, 61))
 		self.pushButton_18.setObjectName("pushButton_18")
-		self.tableWidget = QtWidgets.QTableWidget(Dialog)
+		self.tableWidget = WaypointTableWidget(Dialog)
 		self.tableWidget.setGeometry(QtCore.QRect(650, 30, 941, 831))
 		self.tableWidget.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
 		self.tableWidget.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
@@ -645,6 +593,9 @@ class Ui_Dialog(object):
 		self.pushButton_20 = QtWidgets.QPushButton(Dialog)
 		self.pushButton_20.setGeometry(QtCore.QRect(650, 870, 261, 48))
 		self.pushButton_20.setObjectName("pushButton_20")
+
+		self.threadpool_waypoints = QtCore.QThreadPool()
+
 
 		self.retranslateUi(Dialog)
 		QtCore.QMetaObject.connectSlotsByName(Dialog)
@@ -695,8 +646,8 @@ class Ui_Dialog(object):
 		self.label_8.setText(_translate("Dialog", "SerialTO"))
 		self.label_9.setText(_translate("Dialog", "Max Time"))
 		self.checkBox.setText(_translate("Dialog", "Loop"))
-		self.pushButton_19.setText(_translate("Dialog", "Copy Waypoints"))
-		self.pushButton_20.setText(_translate("Dialog", "Paste Waypoints"))
+		self.pushButton_19.setText(_translate("Dialog", "Export CSV"))
+		self.pushButton_20.setText(_translate("Dialog", "Import CSV"))
 
 
 
@@ -726,9 +677,13 @@ class Ui_Dialog(object):
 		self.pushButton_13.released.connect(gripper_stop)
 		self.pushButton_15.clicked.connect(self.record_position)
 		self.pushButton_11.clicked.connect(rm501.connect)
+
 		self.pushButton_17.clicked.connect(self.waypoint_start)
 		self.pushButton_18.clicked.connect(self.waypoint_stop)
-		self.pushButton_19.clicked.connect(copy_cells)
+		self.pushButton_19.clicked.connect(self.tableWidget.export_csv)
+		self.pushButton_20.clicked.connect(self.tableWidget.import_csv)
+
+
 
 
 	def record_position(self,Dialog):
@@ -757,11 +712,14 @@ class Ui_Dialog(object):
 		self.tableWidget.scrollToItem(self.tableWidget.currentItem())
 
 
+
 	def waypoint_start(self,Dialog):
-		threadpool_waypoints.start(waypoint_executor)
+		self.waypoint_executor = Waypoint_Executor(self)
+		self.threadpool_waypoints.start(self.waypoint_executor)
 
 	def waypoint_stop(self,Dialog):
-		waypoint_executor.autoDelete()
+		self.waypoint_executor.stop()
+		
 
 class Postion_Displayer(QtCore.QRunnable):
 		
@@ -816,6 +774,9 @@ class Waypoint_Executor(QtCore.QRunnable):
 			try:	
 				for waypoint_index in range(self.dialog.tableWidget.rowCount()):
 
+					if not self.running:
+						break
+
 					waypoint_data=self.read_waypoint(waypoint_index)
 					print(str("Waypoint index: {}").format(waypoint_index))
 					#waypoint_timer=QtCore.QBasicTimer()
@@ -825,7 +786,11 @@ class Waypoint_Executor(QtCore.QRunnable):
 							if axis is (0):
 								rm501.axes[axis].target_velocity=int(self.dialog.tableWidget.item(waypoint_index,axis).text())
 								print(str("{}").format(rm501.axes[axis].target_velocity))
-								time.sleep(1)
+								if not int(self.dialog.tableWidget.item(waypoint_index,axis).text()) is (0):
+									time.sleep(1)
+								else:
+									time.sleep(0)
+
 							else:
 								rm501.axes[axis].target_position=int(self.dialog.tableWidget.item(waypoint_index,axis).text())
 								print(str("{}").format(rm501.axes[axis].target_position))
@@ -833,6 +798,9 @@ class Waypoint_Executor(QtCore.QRunnable):
 
 					while not rm501.axes[1].is_done() or not rm501.axes[2].is_done() or not rm501.axes[3].is_done() or not rm501.axes[4].is_done() or not rm501.axes[5].is_done():
 						
+						if not self.running:
+							break
+
 						print("Reaching waypoint: {}".format(waypoint_index))
 						for done in range(6):
 							if rm501.axes[done].is_done():
@@ -843,10 +811,16 @@ class Waypoint_Executor(QtCore.QRunnable):
 
 						time.sleep(0.1)
 
+					if (not self.dialog.checkBox.isChecked()) and (waypoint_index == (self.dialog.tableWidget.rowCount() - 1)):
+						self.stop()
+
 			except RequestPending as e:
 				print("timeout on {}".format(str(e)))
 
-
+	def stop(self):
+		self.running=False
+		for axis in range(6):
+			rm501.axes[axis].target_velocity=0
 	
 	def read_waypoint(self,waypoint_index):
 
@@ -857,7 +831,6 @@ class Waypoint_Executor(QtCore.QRunnable):
 		return waypoint_data
 
 
-
 if __name__ == "__main__":
 	import sys
 	
@@ -866,7 +839,7 @@ if __name__ == "__main__":
 	app = QtWidgets.QApplication(sys.argv)
 	Dialog = QtWidgets.QDialog()
 	threadpool = QtCore.QThreadPool()
-	threadpool_waypoints = QtCore.QThreadPool()
+#	threadpool_waypoints = QtCore.QThreadPool()
 	print("Multithreading with maximum {} threads".format(threadpool.maxThreadCount()))
 	ui = Ui_Dialog()
 	ui.setupUi(Dialog)
@@ -874,7 +847,7 @@ if __name__ == "__main__":
 
 
 	worker = Postion_Displayer(ui)
-	waypoint_executor = Waypoint_Executor(ui)
+#	waypoint_executor = Waypoint_Executor(ui)
 
 	Dialog.show()
 	exit_code = app.exec_()

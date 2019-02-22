@@ -1,3 +1,11 @@
+# This library was obtained from the Ion Motion Control download website
+
+# There have been very few modifications to this file. Mainly formatting & comments.
+# Therefore the original library file should also work unmodified.
+
+# Original is available here:
+# http://downloads.ionmc.com/code/roboclaw_python.zip
+
 import random
 import serial
 import struct
@@ -123,28 +131,32 @@ class Roboclaw:
 	def _sendcommand(self,address,command):
 		self.crc_clear()
 		self.crc_update(address)
-#		self._port.write(chr(address))
+		self._port.write(chr(address))
 		self.crc_update(command)
-#		self._port.write(chr(command))
-		self._port.write(bytes((address, command)))
+		self._port.write(chr(command))
 		return
 
+	# Read functions. Return a tuple (x,y) 
+	#   where x is 1 for success, 0 is for failure
+	#   where y is the data bytes
+
 	def _readchecksumword(self):
-		data = bytes(self._port.read(2))
+		data = self._port.read(2)
 		if len(data)==2:
-			crc = (data[0]<<8) | data[1]
+			crc = (ord(data[0])<<8) | ord(data[1])
 			return (1,crc)	
 		return (0,0)
 		
 	def _readbyte(self):
-		data = bytes(self._port.read(1))
+		data = self._port.read(1)
 		if len(data):
-			val = data[0]
+			val = ord(data)
 			self.crc_update(val)
 			return (1,val)	
 		return (0,0)
 		
 	def _readword(self):
+		# Read a 2-byte word value
 		val1 = self._readbyte()
 		if val1[0]:
 			val2 = self._readbyte()
@@ -153,6 +165,7 @@ class Roboclaw:
 		return (0,0)
 
 	def _readlong(self):
+		# Read a 4-byte long value
 		val1 = self._readbyte()
 		if val1[0]:
 			val2 = self._readbyte()
@@ -165,16 +178,18 @@ class Roboclaw:
 		return (0,0)	
 
 	def _readslong(self):
+		# Returns signed long
 		val = self._readlong()
-		if val[0]:
-			if val[1]&0x80000000:
-				return (val[0],val[1]-0x100000000)
-			return (val[0],val[1])
+		if val[0]:  # True (1) if read was successful
+			if val[1] & 0x80000000:  # If most significant bit is 1 
+				# Return the two's complement negative value
+				return (val[0], val[1] - 0x100000000)
+			return (val[0], val[1])
 		return (0,0)
 
 	def _writebyte(self,val):
 		self.crc_update(val&0xFF)
-		self._port.write(bytes((val&0xFF, )))
+		self._port.write(chr(val&0xFF))
 
 	def _writesbyte(self,val):
 		self._writebyte(val)
@@ -230,6 +245,7 @@ class Roboclaw:
 		return (0,0)
 
 	def _read4(self,address,cmd):
+		# Return tuple (success, 4-byte)
 		trys = self._trystimeout
 		while 1:
 			self._port.flushInput()
@@ -247,6 +263,10 @@ class Roboclaw:
 		return (0,0)
 
 	def _read4_1(self,address,cmd):
+		""" Returns:
+		Success tuple: (1, 4-byte value, 1-byte CRC)
+		Failure tuple: (0,0)
+		"""
 		trys = self._trystimeout
 		while 1:
 			self._port.flushInput()
@@ -641,7 +661,7 @@ class Roboclaw:
 	def SendRandomData(self,cnt):
 		for i in range(0,cnt):
 			byte = random.getrandbits(8)
-			self._port.write(bytes((byte,)))
+			self._port.write(chr(byte))
 		return
 
 	def ForwardM1(self,address,val):
@@ -706,16 +726,16 @@ class Roboclaw:
 		while 1:
 			self._port.flushInput()
 			self._sendcommand(address,self.Cmd.GETVERSION)
-			ver = []
+			str = ""
 			passed = True
 			for i in range(0,48):
-				data = bytes(self._port.read(1))
+				data = self._port.read(1)
 				if len(data):
-					val = data[0]
+					val = ord(data)
 					self.crc_update(val)
 					if(val==0):
 						break
-					ver.append("{:c}".format(val))
+					str+=data[0]
 				else:
 					passed = False
 					break
@@ -723,7 +743,7 @@ class Roboclaw:
 				crc = self._readchecksumword()
 				if crc[0]:
 					if self._crc&0xFFFF==crc[1]&0xFFFF:
-						return (1,"".join(ver))
+						return (1,str)
 					else:
 						time.sleep(0.01)
 			trys-=1
@@ -1029,9 +1049,5 @@ class Roboclaw:
 		return self._read1(address,self.Cmd.GETPWMMODE)
 
 	def Open(self):
-#		try:
 		self._port = serial.Serial(port=self.comport, baudrate=self.rate, timeout=1, interCharTimeout=self.timeout)
-#		except:
-#			return 0
-#		return 1
 
